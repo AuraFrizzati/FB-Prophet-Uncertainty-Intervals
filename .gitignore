@@ -1,0 +1,10 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+/.quarto/
+
+FB-Prophet-Uncertainty-Intervals_files/
+_publish.yml
+_quarto.yml

@@ -1,0 +1,195 @@
+---
+title: "FB-Prophet-Uncertainty-Intervals"
+format: html
+editor: visual
+---
+
+## FB Prophet: Uncertainty Intervals
+
+```{r message = FALSE,warning=FALSE}
+# load relevant libraries
+library(prophet)
+library(dplyr) # data wrangling
+library(ggplot2)
+library(lubridate) # time data wrangling
+library(patchwork) # combine ggplots
+
+options(scipen=999) # remove scientific notation from plots
+```
+
+For demo purposes, I downloaded the dataset used in FB Prophet R online tutorial
+
+<https://facebook.github.io/prophet/docs/quick_start.html#r-api>
+
+```{r}
+df <- 
+  read.csv('https://raw.githubusercontent.com/facebook/prophet/main/examples/example_wp_log_peyton_manning.csv') |>
+  mutate(ds = as.Date(ds)) |>
+  filter(lubridate::year(ds) >= 2015)
+
+```
+
+```{r}
+df |>
+  ggplot(aes(x=ds,y=y)) +
+  geom_line() +
+  labs(
+    title = "Wikipedia page N daily views"
+  )
+```
+
+```{r}
+m <- prophet(df) ## fit the model to the data
+future <- make_future_dataframe(m, periods = 30) ## dataframe to predict for next 30 days
+#tail(future)
+forecast <- predict(m, future) # predict next 30 days
+#
+```
+
+Plot historical values, fitted values and forecast values. Note the **prediction/uncertainty interval** provided around the fitted and forecasted values (this is **80% by default**)
+
+```{r}
+plot(m,forecast)
+```
+
+The prediction/uncertainty interval is provided in the forecast output dataframe as `yhat_lower` and `yhat_upper`
+
+```{r}
+tail(forecast[c('ds', 'yhat', 'yhat_lower', 'yhat_upper')])
+```
+
+The forecast predictions will now be re-calculated 10 times using the same Prophet model fitted to the same data
+
+```{r}
+iterations = 10
+
+forecast_iter <- data.frame()
+
+for (i in 1:iterations) {
+  #set.seed(42)
+  forecast <- predict(m, future) |>
+    mutate(iter = i)
+  
+  forecast_iter <- rbind(forecast_iter,forecast)
+}
+
+forecast_iter <-
+  forecast_iter |>
+  mutate(iter = as.factor(iter)) |>
+  select(ds,yhat,yhat_lower,yhat_upper,iter) |>
+  mutate(
+    percent_lower = round((100*((yhat_lower-yhat)/yhat)),2),
+    percent_upper = round((100*((yhat_upper-yhat)/yhat)),2)
+  )
+
+```
+
+```{r}
+# create plots to show the issue
+percent_lower_random <-
+  forecast_iter |>
+  filter(lubridate::year(ds) >= 2016) |>
+  ggplot(aes(x=ds, y = percent_lower, color = iter)) +
+  geom_line() +
+  labs(
+    title = "Wikipedia page N daily views\n% Change of Prediction Lower Limit",
+    y = "[(yhat_lower - yhat)/\nyhat] x 100 %"
+  )
+
+percent_upper_random <-
+  forecast_iter |>
+  filter(lubridate::year(ds) >= 2016) |>
+  ggplot(aes(x=ds, y = percent_upper, color = iter)) +
+  geom_line() +
+  labs(
+    title = "Wikipedia page N daily views\n% Change of Prediction Upper Limit",
+    y = "[(yhat_upper - yhat)/\nyhat] x 100 %"
+  )
+
+yhat_random <-
+  forecast_iter |>
+  filter(lubridate::year(ds) >= 2016) |>
+  ggplot(aes(x=ds, y = yhat, color = iter)) +
+  geom_line() +
+  labs(
+    title = "Wikipedia page N daily views\nPredicted values (y-hat)",
+    y = "Predicted values (y-hat)"
+  )
+```
+
+When FB Prophet algorithm is run repeatedly on the same data, all **predicted values** (**y-hat**) **remain the same**:
+
+```{r}
+yhat_random
+```
+
+However, the **upper** (**yhat_upper**) and **lower** (**yhat_lower**) **limits** of the **prediction intervals slightly fluctuate at each iteration, using the same model fitted on the same historical data** (in the order of a fraction of the predicted value)
+
+```{r}
+percent_lower_random / percent_upper_random
+```
+
+The reason for this **variation** relates to **how the prediction/uncertainty intervals are calculated**, with **trend uncertainty estimated using Monte Carlo sampling** from the trend generative model (this is by default done with 1000 samples, and then the e.g. 80% intervals are computed by taking the 10th and 90th quantiles from these samples). See this link for more technical information: <https://github.com/facebook/prophet/issues/1124>
+
+To avoid the issue , it is possible to **set a random seed** in R:
+
+```{r}
+iterations = 10
+
+forecast_iter <- data.frame()
+
+for (i in 1:iterations) {
+  set.seed(42)  ### RANDOM SEED SET (ARBITRARY VALUE) - note it doesn't work outside of the loop
+  forecast <- predict(m, future) |>
+    mutate(iter = i)
+  
+  forecast_iter <- rbind(forecast_iter,forecast)
+}
+
+forecast_iter <-
+  forecast_iter |>
+  mutate(iter = as.factor(iter)) |>
+  select(ds,yhat,yhat_lower,yhat_upper,iter) |>
+  mutate(
+    percent_lower = round((100*((yhat_lower-yhat)/yhat)),2),
+    percent_upper = round((100*((yhat_upper-yhat)/yhat)),2)
+  )
+
+# create plots to show the issue
+percent_lower_random <-
+  forecast_iter |>
+  filter(lubridate::year(ds) >= 2016) |>
+  ggplot(aes(x=ds, y = percent_lower, color = iter)) +
+  geom_line() +
+  labs(
+    title = "Wikipedia page N daily views\n% Change of Prediction Lower Limit",
+    y = "[(yhat_lower - yhat)/\nyhat] x 100 %"
+  )
+
+percent_upper_random <-
+  forecast_iter |>
+  filter(lubridate::year(ds) >= 2016) |>
+  ggplot(aes(x=ds, y = percent_upper, color = iter)) +
+  geom_line() +
+  labs(
+    title = "Wikipedia page N daily views\n% Change of Prediction Upper Limit",
+    y = "[(yhat_upper - yhat)/\nyhat] x 100 %"
+  )
+
+yhat_random <-
+  forecast_iter |>
+  filter(lubridate::year(ds) >= 2016) |>
+  ggplot(aes(x=ds, y = yhat, color = iter)) +
+  geom_line() +
+  labs(
+    title = "Wikipedia page N daily views\nPredicted values (y-hat)",
+    y = "Predicted values (y-hat)"
+  )
+```
+
+Now all values (including yhat_upper and yhat_lower) remain stable...
+
+```{r}
+yhat_random
+percent_lower_random / percent_upper_random
+```
