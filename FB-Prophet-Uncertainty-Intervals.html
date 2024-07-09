@@ -98,6 +98,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="fb-prophet-uncertainty-intervals" class="level2">
 <h2 class="anchored" data-anchor-id="fb-prophet-uncertainty-intervals">FB Prophet: Uncertainty Intervals</h2>
+<p>code on: https://github.com/AuraFrizzati/FB-Prophet-Uncertainty-Intervals.git</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># load relevant libraries</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(prophet)</span>
@@ -160,12 +161,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tail</span>(forecast[<span class="fu">c</span>(<span class="st">'ds'</span>, <span class="st">'yhat'</span>, <span class="st">'yhat_lower'</span>, <span class="st">'yhat_upper'</span>)])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>            ds     yhat yhat_lower yhat_upper
-408 2016-02-14 8.373535   7.753395   8.976178
-409 2016-02-15 8.851080   8.253352   9.444127
-410 2016-02-16 8.658416   8.057550   9.225448
-411 2016-02-17 8.479894   7.860272   9.133956
-412 2016-02-18 8.461203   7.863723   9.051487
-413 2016-02-19 8.456945   7.807348   9.063008</code></pre>
+408 2016-02-14 8.373535   7.771237   8.989554
+409 2016-02-15 8.851080   8.263904   9.428261
+410 2016-02-16 8.658416   8.053351   9.296919
+411 2016-02-17 8.479894   7.848306   9.088377
+412 2016-02-18 8.461203   7.865404   9.107947
+413 2016-02-19 8.456945   7.795432   9.095399</code></pre>
 </div>
 </div>
 <p>The forecast predictions will now be re-calculated 10 times using the same Prophet model fitted to the same data</p>

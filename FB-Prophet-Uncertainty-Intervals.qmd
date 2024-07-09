@@ -6,8 +6,7 @@ editor: visual
 
 ## FB Prophet: Uncertainty Intervals
 
-code on:
-https://github.com/AuraFrizzati/FB-Prophet-Uncertainty-Intervals.git
+code on: https://github.com/AuraFrizzati/FB-Prophet-Uncertainty-Intervals.git
 
 ```{r message = FALSE,warning=FALSE}
 # load relevant libraries
